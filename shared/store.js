@@ -7,6 +7,7 @@
   var byId = {}; PRODUCTS.forEach(function (p) { byId[p.id] = p; });
 
   function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function nProductos(n) { return n + (n === 1 ? " producto" : " productos"); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fullName(p) { return p.name + (p.variant && !p.kit ? " – " + p.variant : ""); }
   function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
@@ -55,7 +56,7 @@
     if (query) { var h = norm([p.brand, p.name, p.variant, p.desc, p.cat, p.kit ? "kit" : "", p.tags || ""].join(" ")).replace(/vanilla/g, "vanilla vainilla").replace(/lashes|pestanas/g, "lashes pestanas").replace(/mist/g, "mist bruma splash"); if (norm(query).split(/\s+/).some(function (w) { return h.indexOf(w) < 0; })) return false; }
     if (activeCat === "todos") return true;
     if (activeCat === "kits") return !!p.kit;
-    return p.cat === activeCat;
+    return p.cat === activeCat && !p.kit;
   }
 
   function ctrl(p) {
@@ -83,21 +84,22 @@
     var list = PRODUCTS.filter(matches), html = "";
     if (opts.layout === "rows" && activeCat === "todos" && !query) {
       CATS.filter(function (c) { return c.id !== "todos"; }).forEach(function (c) {
-        var items = PRODUCTS.filter(function (p) { return c.id === "kits" ? p.kit : p.cat === c.id; });
+        var items = PRODUCTS.filter(function (p) { return c.id === "kits" ? !!p.kit : (p.cat === c.id && !p.kit); });
         if (!items.length) return;
-        html += '<section class="bp-rowsec" id="sec-' + c.id + '"><div class="bp-rowhead"><h3>' + esc(c.label) + '</h3><span>' + items.length + ' productos · desliza →</span></div><div class="bp-track">' + items.map(card).join("") + "</div></section>";
+        html += '<section class="bp-rowsec" id="sec-' + c.id + '"><div class="bp-rowhead"><h3>' + esc(c.label) + '</h3><span>' + nProductos(items.length) + ' · desliza →</span></div><div class="bp-track">' + items.map(card).join("") + "</div></section>";
       });
     } else {
       html = list.length ? '<div class="bp-grid">' + list.map(card).join("") + "</div>"
         : '<div class="bp-empty">No encontramos productos con “' + esc(query) + '”. Escríbenos por WhatsApp y te ayudamos 💖</div>';
     }
     el.innerHTML = html;
-    var c = $("#bp-count"); if (c) c.textContent = list.length + " productos";
+    var c = $("#bp-count"); if (c) c.textContent = nProductos(list.length);
   }
 
   function renderCart() {
     var L = lines(), n = count(), t = total();
     $$("[data-cart-count]").forEach(function (e) { e.textContent = n; e.classList.toggle("is-zero", !n); });
+    $$("[data-cart-noun]").forEach(function (e) { e.textContent = n === 1 ? "producto" : "productos"; });
     $$("[data-cart-total]").forEach(function (e) { e.textContent = fmt(t); });
     var fab = $("#bp-fab"); if (fab) fab.classList.toggle("has-items", n > 0);
     var box = $("#bp-cart-items"); if (!box) return;
@@ -126,7 +128,7 @@
       '<button id="bp-fab" class="bp-fab" data-open-cart aria-label="Ver carrito"><span class="bp-fab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><i data-cart-count class="is-zero">0</i></span><span class="bp-fab-txt">Ver carrito</span><span class="bp-fab-total" data-cart-total>$0</span></button>' +
       '<div id="bp-toast" class="bp-toast" role="status" aria-live="polite"></div>' +
       '<div class="bp-overlay" data-close-cart></div>' +
-      '<aside id="bp-cart" class="bp-cart" aria-label="Carrito" aria-modal="true" role="dialog"><header class="bp-cart-head"><div><h2>Tu pedido</h2><p><span data-cart-count>0</span> productos</p></div><button class="bp-x" data-close-cart aria-label="Cerrar">×</button></header>' +
+      '<aside id="bp-cart" class="bp-cart" aria-label="Carrito" aria-modal="true" role="dialog"><header class="bp-cart-head"><div><h2>Tu pedido</h2><p><span data-cart-count>0</span> <span data-cart-noun>productos</span></p></div><button class="bp-x" data-close-cart aria-label="Cerrar">×</button></header>' +
       '<div class="bp-cart-body"><div id="bp-cart-items"></div><div id="bp-cart-foot"><div class="bp-totals"><span>Total</span><strong data-cart-total>$0</strong></div>' +
       '<p class="bp-form-title">Tus datos <small>(opcional, nos ayuda a despachar más rápido)</small></p>' +
       '<div class="bp-form"><label><span>Nombre</span><input name="nombre" autocomplete="name" placeholder="Tu nombre"></label><label><span>Ciudad</span><input name="ciudad" autocomplete="address-level2" placeholder="Ej: Bogotá"></label><label class="full"><span>Dirección</span><input name="direccion" autocomplete="street-address" placeholder="Barrio, calle, número"></label><label class="full"><span>Notas</span><input name="notas" placeholder="Algo que debamos saber"></label></div>' +
