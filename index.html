@@ -161,6 +161,14 @@ footer small{opacity:.8}
 .bp-form input{border:1.5px solid var(--line);background:var(--surface);border-radius:14px}
 .bp-form input:focus{border-color:var(--gold)}
 .bp-form label span{font-weight:700;color:var(--muted)}
+
+/* ---- Vista previa sin fondo: productos recortados sobre fondo rubor ---- */
+.bp-media{background:radial-gradient(120% 95% at 50% 40%,#fff 0%,#fdf4f7 48%,#f7e3ea 100%)}
+.bp-media::after{content:"";position:absolute;left:27%;right:27%;bottom:7.6%;height:4.8%;border-radius:50%;background:radial-gradient(closest-side,rgba(150,70,100,.26),rgba(150,70,100,0));pointer-events:none;z-index:0}
+.bp-media img{position:relative;z-index:1;object-fit:contain;filter:drop-shadow(0 10px 12px rgba(150,70,100,.16)) drop-shadow(0 2px 3px rgba(46,42,43,.10))}
+.bp-badge,.bp-flyer{z-index:2}
+.bub img{box-sizing:border-box;padding:3px;object-fit:cover;object-position:50% 58%;background:radial-gradient(120% 95% at 50% 40%,#fff 0%,#fdf4f7 48%,#f7e3ea 100%)}
+.bp-line img{object-fit:contain;background:radial-gradient(120% 95% at 50% 40%,#fff 0%,#fdf4f7 48%,#f7e3ea 100%)}
 </style>
 </head>
 <body>
@@ -179,10 +187,10 @@ footer small{opacity:.8}
     <div class="follow"><span class="s">Síguenos</span><div data-social></div></div>
   </div>
   <div class="board" aria-hidden="true">
-    <figure class="pol p1"><img src="images/vs-whipped-bare-vanilla.webp" alt=""><figcaption>Bare Vanilla</figcaption></figure>
-    <figure class="pol p2 tape-rose"><img src="images/hauslabs-blush.webp" alt=""><figcaption>rosa coral</figcaption></figure>
-    <figure class="pol p3 tape-rose"><img src="images/bc-lashes-maui.webp" alt=""><figcaption>pestañas Maui</figcaption></figure>
-    <figure class="pol p4"><img src="images/anua-peach-mask.webp" alt=""><figcaption>Anua Peach</figcaption></figure>
+    <figure class="pol p1"><img src="images/hero/vs-whipped-bare-vanilla.webp" alt=""><figcaption>Bare Vanilla</figcaption></figure>
+    <figure class="pol p2 tape-rose"><img src="images/hero/hauslabs-blush.webp" alt=""><figcaption>rosa coral</figcaption></figure>
+    <figure class="pol p3 tape-rose"><img src="images/hero/bc-lashes-maui.webp" alt=""><figcaption>pestañas Maui</figcaption></figure>
+    <figure class="pol p4"><img src="images/hero/anua-peach-mask.webp" alt=""><figcaption>Anua Peach</figcaption></figure>
     <div class="note"><img src="images/brand/bp-logo-full-light.webp" alt="" width="640" height="575">con amor desde Bogotá</div>
   </div>
 </div></section>
