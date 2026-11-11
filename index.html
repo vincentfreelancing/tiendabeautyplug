@@ -98,6 +98,7 @@ section.cat{padding:34px 0 20px}
 .search input:focus{border-color:var(--gold)}
 .search svg{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--gold)}
 #catalogo{scroll-margin-top:120px}
+#pagos{scroll-margin-top:120px}
 #bp-pills{position:sticky;top:66px;z-index:20;background:var(--bg);padding-top:8px}
 .bp-pill{background:var(--surface);border:1.5px solid var(--line);color:var(--ink);font-weight:700}
 .bp-pill.is-active{background:var(--dark);border-color:var(--pink);color:var(--ink);box-shadow:0 8px 18px -10px rgba(201,90,132,.9)}
@@ -171,6 +172,38 @@ footer small{opacity:.8}
 .bp-badge,.bp-flyer{z-index:2}
 .bub img{box-sizing:border-box;padding:3px;object-fit:cover;object-position:50% 58%;background:radial-gradient(120% 95% at 50% 40%,#fff 0%,#fdf4f7 48%,#f7e3ea 100%)}
 .bp-line img{object-fit:contain;background:radial-gradient(120% 95% at 50% 40%,#fff 0%,#fdf4f7 48%,#f7e3ea 100%)}
+
+
+.pay{padding:8px 0 44px}
+.pay h2{font-size:40px;font-weight:800;margin:0 0 8px}
+.pay-lead{margin:0 0 20px;font-size:15.5px;line-height:1.55;color:var(--ink2);max-width:560px}
+.pay-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(min-width:720px){.pay-grid{grid-template-columns:repeat(4,1fr);gap:14px}}
+.pay-item{margin:0;width:100%;background:var(--surface);border:1.5px solid var(--gold2);border-radius:24px;padding:18px 14px 16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;box-shadow:0 14px 30px -22px rgba(46,42,43,.4);cursor:pointer;font:inherit;color:inherit;transition:transform .15s,border-color .2s,box-shadow .2s}
+.pay-item:hover{transform:translateY(-2px);border-color:var(--pink)}
+.pay-item:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.pay-item.is-selected{border-color:var(--pink);box-shadow:0 0 0 3px rgba(217,119,154,.28),0 14px 30px -22px rgba(46,42,43,.4);background:linear-gradient(180deg,#fff,#fdf0f5)}
+.pay-ico{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(180deg,#fff,var(--blush2));border:1px solid var(--line);color:var(--gold3);flex:0 0 auto}
+.pay-name{font-family:var(--font-head);font-weight:800;font-size:16px;letter-spacing:-.02em;color:var(--ink);line-height:1.15}
+.pay-sub{margin:0;font-size:12px;line-height:1.35;color:var(--muted)}
+.pay-hint{margin:0;font-size:11.5px;font-weight:700;color:var(--rose);letter-spacing:.01em}
+.pay-note{margin:16px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink2);max-width:560px}
+.bp-pay{margin:16px 0 0}
+.bp-pay-label{margin:0 0 8px;font-weight:700;font-size:14px;color:var(--ink)}
+.bp-pay-opts{display:flex;flex-wrap:wrap;gap:8px}
+.bp-pay-opt{flex:1 1 calc(50% - 8px);min-height:44px;padding:10px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:13.5px;line-height:1.2;transition:background .2s,border-color .2s,color .2s}
+.bp-pay-opt:hover{border-color:var(--pink)}
+.bp-pay-opt.is-selected{background:var(--dark);border-color:var(--pink);color:var(--ink);box-shadow:0 8px 18px -10px rgba(201,90,132,.9)}
+.bp-pay-opt:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.bp-pay-err,.bp-field-err{display:block;margin:6px 0 0;font-size:12.5px;font-weight:700;color:var(--rose);line-height:1.3}
+.bp-pay.has-error .bp-pay-opts{outline:2px solid rgba(181,72,95,.35);outline-offset:3px;border-radius:16px}
+.bp-form input.is-invalid{border-color:var(--rose)}
+.bp-ship-line{margin:12px 0 0;text-align:center;font-size:13px;font-weight:700;color:var(--ink2);background:var(--surface);border:1.5px dashed var(--gold2);border-radius:999px;padding:10px 14px}
+.bp-note{text-align:center;font-size:12px;opacity:.75;margin:10px 0 4px}
+footer .fnav{margin:0 0 12px;font-size:14px;font-weight:700}
+footer .fnav a{color:var(--gold3);text-decoration:none;border-bottom:1px solid rgba(138,100,48,.35)}
+footer .fnav a:hover{color:var(--rose);border-bottom-color:var(--rose)}
+.bp-pay-line{text-align:center;font-size:12.5px;line-height:1.4;margin:12px 0 0;color:var(--ink2)}
 </style>
 </head>
 <body>
@@ -222,13 +255,55 @@ footer small{opacity:.8}
     <div class="step"><div class="n">2</div><div><h3>Confirma por WhatsApp</h3><p>Tu pedido nos llega listo, con el total.</p></div></div>
     <div class="step"><div class="n">3</div><div><h3>Coordinamos pago y envío</h3><p>Te escribimos para cerrar tu pedido.</p></div></div>
   </div>
-  <div class="pills2"><span>🚚 Envíos a toda Colombia</span><span>💬 Pago por WhatsApp</span><span>📍 Desde Bogotá</span></div>
+  <div class="pills2"><span>🚚 Envíos por Servientrega a todo el país</span><span>💬 Pago por WhatsApp</span><span>📍 Desde Bogotá</span></div>
 </div></section>
+
+
+<section class="pay" id="pagos">
+  <div class="wrap">
+    <h2>Métodos de <em>pago</em></h2>
+    <p class="pay-lead">Al confirmar tu pedido por WhatsApp te compartimos los datos para pagar. El envío es por Servientrega a todo el país.</p>
+    <ul class="pay-grid">
+      <li>
+        <button type="button" class="pay-item" data-pay="nequi" aria-pressed="false">
+          <span class="pay-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M10 7h4M12 17.2v.01"/></svg></span>
+          <span class="pay-name">Nequi</span>
+          <span class="pay-hint" hidden>Seleccionado para tu pedido</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="pay-item" data-pay="bancolombia" aria-pressed="false">
+          <span class="pay-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16M6 10V19M12 10V19M18 10V19M3 19h18M3 10l9-6 9 6"/></svg></span>
+          <span class="pay-name">Bancolombia</span>
+          <span class="pay-hint" hidden>Seleccionado para tu pedido</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="pay-item" data-pay="breb" aria-pressed="false">
+          <span class="pay-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 14h7l-1 7 8-11h-7l1-7z"/></svg></span>
+          <span class="pay-name">Bre-B</span>
+          <p class="pay-sub">Pagos inmediatos con llave</p>
+          <span class="pay-hint" hidden>Seleccionado para tu pedido</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="pay-item" data-pay="contraentrega" aria-pressed="false">
+          <span class="pay-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 12h.01M12 12h5"/></svg></span>
+          <span class="pay-name">Contra entrega (Bogotá)</span>
+          <p class="pay-sub">Pagas en efectivo al recibir, solo en Bogotá</p>
+          <span class="pay-hint" hidden>Seleccionado para tu pedido</span>
+        </button>
+      </li>
+    </ul>
+    <p class="pay-note">No publicamos números de cuenta ni llaves en la página. Te los enviamos por WhatsApp al confirmar tu pedido.</p>
+  </div>
+</section>
 
 <footer>
   <img class="flogo" src="images/brand/bp-logo-full-light.webp" alt="The Beauty Plug Collective" width="640" height="575">
   <p class="script">Más que belleza, es confianza</p>
   <div class="links" data-social></div>
+  <p class="fnav"><a href="#pagos">Métodos de pago</a></p>
   <p style="margin:0 0 14px;font-size:14px">WhatsApp 311 546 1244 · @tiendabeautyplug</p>
   <small>© 2026 The Beauty Plug Collective · Bogotá, Colombia</small>
 </footer>

@@ -3,8 +3,17 @@
 (function () {
   "use strict";
   var CFG = window.BP_CONFIG, PRODUCTS = window.BP_PRODUCTS, CATS = window.BP_CATEGORIES;
-  var CART_KEY = "bp_cart_v1", CUST_KEY = "bp_customer_v1";
+  var CART_KEY = "bp_cart_v1", CUST_KEY = "bp_customer_v1", PAY_KEY = "bp_pay_v1";
   var byId = {}; PRODUCTS.forEach(function (p) { byId[p.id] = p; });
+
+  /* Métodos de pago: edita label (vista) o message/code (texto de WhatsApp). */
+  var PAY_METHODS = [
+    { id: "nequi", label: "Nequi", message: "Nequi", code: "PAGO_NEQUI" },
+    { id: "bancolombia", label: "Bancolombia", message: "Bancolombia", code: "PAGO_BANCOLOMBIA" },
+    { id: "breb", label: "Bre-B", message: "Bre-B", code: "PAGO_BREB" },
+    { id: "contraentrega", label: "Contra entrega (Bogotá)", message: "Contra entrega", code: "PAGO_CONTRAENTREGA" }
+  ];
+  var payById = {}; PAY_METHODS.forEach(function (m) { payById[m.id] = m; });
 
   function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function nProductos(n) { return n + (n === 1 ? " producto" : " productos"); }
@@ -16,31 +25,60 @@
   var cart = load(CART_KEY, {});
   Object.keys(cart).forEach(function (id) { if (!byId[id] || !(cart[id] > 0)) delete cart[id]; });
   var customer = load(CUST_KEY, { nombre: "", ciudad: "", direccion: "", notas: "" });
+  var payId = load(PAY_KEY, "");
+  if (payId && !payById[payId]) payId = "";
+  var triedOrder = false;
 
   function lines() { return Object.keys(cart).map(function (id) { var p = byId[id]; return { p: p, qty: cart[id], sub: p.price * cart[id] }; }); }
   function count() { return lines().reduce(function (a, l) { return a + l.qty; }, 0); }
   function total() { return lines().reduce(function (a, l) { return a + l.sub; }, 0); }
+  function payMethod() { return payById[payId] || null; }
+
+  function isBogota(s) {
+    var n = String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,]/g, " ").replace(/\s+/g, " ").trim();
+    return n === "bogota" || n === "bogota dc" || n === "bogota d c" || n === "bogota colombia" || /(^|\s)bogota(\s|$)/.test(n);
+  }
+  function fieldVal(name) { return String((customer[name] || "")).trim(); }
+
+  function orderIssues() {
+    var issues = [];
+    if (!fieldVal("nombre")) issues.push({ key: "nombre", msg: "Escribe tu nombre", el: '[name="nombre"]' });
+    if (!fieldVal("ciudad")) issues.push({ key: "ciudad", msg: "Escribe tu ciudad", el: '[name="ciudad"]' });
+    if (!fieldVal("direccion")) issues.push({ key: "direccion", msg: "Escribe tu dirección", el: '[name="direccion"]' });
+    if (!payMethod()) issues.push({ key: "pago", msg: "Elige tu método de pago", el: "#bp-pay-opts" });
+    else if (payId === "contraentrega" && fieldVal("ciudad") && !isBogota(customer.ciudad)) {
+      issues.push({ key: "contra", msg: "El pago contra entrega es solo para Bogotá", el: "#bp-pay-opts" });
+    }
+    return issues;
+  }
 
   function setQty(id, q) { q = Math.max(0, Math.min(99, q | 0)); if (q) cart[id] = q; else delete cart[id]; save(CART_KEY, cart); refresh(id); }
   function add(id) { setQty(id, (cart[id] || 0) + 1); toast("Agregado: " + fullName(byId[id])); bump(); }
 
+  function itemName(l) { return l.p.brand + " · " + fullName(l.p) + (l.p.size ? " (" + l.p.size + ")" : ""); }
+
   function buildMessage() {
-    var L = lines(), out = [];
+    var L = lines(), out = [], pay = payMethod();
     out.push("¡Hola " + CFG.STORE_NAME + "! 💖");
     out.push("Quiero hacer este pedido:");
     out.push("");
     L.forEach(function (l, i) {
-      out.push((i + 1) + ". " + l.p.brand + " · " + fullName(l.p) + (l.p.size ? " (" + l.p.size + ")" : ""));
-      out.push("   " + l.qty + " x " + fmt(l.p.price) + " = " + fmt(l.sub));
+      out.push("Ítem: " + (i + 1));
+      out.push("Producto: " + itemName(l));
+      out.push("Cantidad: " + l.qty);
+      out.push("Precio: " + fmt(l.p.price));
+      out.push("Subtotal: " + fmt(l.sub));
+      out.push("");
     });
-    out.push("");
     out.push("Productos: " + count());
-    out.push("*TOTAL: " + fmt(total()) + " COP*");
+    out.push("TOTAL: " + fmt(total()) + " COP");
     out.push("");
-    out.push("👤 Nombre: " + (customer.nombre || "(por confirmar)"));
-    out.push("📍 Ciudad: " + (customer.ciudad || "(por confirmar)"));
-    out.push("🏠 Dirección: " + (customer.direccion || "(por confirmar)"));
-    if (customer.notas) out.push("📝 Notas: " + customer.notas);
+    out.push("Nombre: " + fieldVal("nombre"));
+    out.push("Ciudad: " + fieldVal("ciudad"));
+    out.push("Dirección: " + fieldVal("direccion"));
+    out.push("Método de pago: " + (pay ? pay.message + " (#" + pay.code + ")" : ""));
+    out.push("Entrega: Servientrega (#ENTREGA_SERVIENTREGA)");
+    out.push("Notas: " + (fieldVal("notas") || ""));
     out.push("");
     out.push("¿Me confirman disponibilidad, pago y envío? ¡Gracias! ✨");
     return out.join("\n");
@@ -96,6 +134,47 @@
     var c = $("#bp-count"); if (c) c.textContent = nProductos(list.length);
   }
 
+  function updateWaHref() {
+    var w = $("#bp-wa"); if (!w) return;
+    w.href = orderIssues().length || !count() ? "#" : waLink(buildMessage());
+  }
+
+  function renderOrderUI() {
+    var pay = payMethod();
+    $$("[data-pay]").forEach(function (btn) {
+      var on = btn.getAttribute("data-pay") === payId;
+      btn.classList.toggle("is-selected", on);
+      if (btn.getAttribute("role") === "radio") btn.setAttribute("aria-checked", on ? "true" : "false");
+      else btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    $$(".pay-hint").forEach(function (h) {
+      var btn = h.closest("[data-pay]");
+      var on = btn && btn.getAttribute("data-pay") === payId;
+      h.hidden = !on;
+    });
+    var issues = triedOrder ? orderIssues() : [];
+    var byKey = {};
+    issues.forEach(function (i) { byKey[i.key] = i.msg; });
+    $$("[data-err]").forEach(function (el) {
+      var msg = byKey[el.getAttribute("data-err")] || "";
+      el.textContent = msg;
+      el.hidden = !msg;
+    });
+    $$(".bp-form [name]").forEach(function (inp) {
+      inp.classList.toggle("is-invalid", !!(triedOrder && byKey[inp.name]));
+    });
+    var box = $("#bp-pay");
+    if (box) box.classList.toggle("has-error", !!(byKey.pago || byKey.contra));
+    updateWaHref();
+  }
+
+  function setPay(id) {
+    if (!payById[id]) return;
+    payId = id;
+    save(PAY_KEY, payId);
+    renderOrderUI();
+  }
+
   function renderCart() {
     var L = lines(), n = count(), t = total();
     $$("[data-cart-count]").forEach(function (e) { e.textContent = n; e.classList.toggle("is-zero", !n); });
@@ -108,7 +187,7 @@
       return '<div class="bp-line"><img src="' + CFG.IMG_BASE + l.p.img + '" alt=""><div class="bp-line-info"><p class="bp-line-brand">' + esc(l.p.brand) + '</p><p class="bp-line-name">' + esc(fullName(l.p)) + '</p><p class="bp-line-unit">' + fmt(l.p.price) + ' c/u</p><div class="bp-step sm"><button data-dec="' + l.p.id + '" aria-label="Quitar uno">−</button><b>' + l.qty + '</b><button data-inc="' + l.p.id + '" aria-label="Agregar uno">+</button></div></div><div class="bp-line-right"><span class="bp-line-sub">' + fmt(l.sub) + '</span><button class="bp-line-del" data-del="' + l.p.id + '" aria-label="Eliminar">Eliminar</button></div></div>';
     }).join("");
     $("#bp-cart-foot").classList.toggle("is-hidden", !L.length);
-    var w = $("#bp-wa"); if (w) w.href = waLink(buildMessage());
+    renderOrderUI();
   }
   function fillCtrls() { $$("[data-ctrl]").forEach(function (e) { if (byId[e.dataset.ctrl]) e.innerHTML = ctrl(byId[e.dataset.ctrl]); }); }
   function refresh(id) {
@@ -122,6 +201,12 @@
   function openCart() { document.body.classList.add("cart-open"); renderCart(); }
   function closeCart() { document.body.classList.remove("cart-open"); }
 
+  function payButtons() {
+    return PAY_METHODS.map(function (m) {
+      return '<button type="button" class="bp-pay-opt" role="radio" aria-checked="false" data-pay="' + m.id + '">' + esc(m.label) + "</button>";
+    }).join("");
+  }
+
   function injectShell() {
     var d = document.createElement("div");
     d.innerHTML =
@@ -130,18 +215,53 @@
       '<div class="bp-overlay" data-close-cart></div>' +
       '<aside id="bp-cart" class="bp-cart" aria-label="Carrito" aria-modal="true" role="dialog"><header class="bp-cart-head"><div><h2>Tu pedido</h2><p><span data-cart-count>0</span> <span data-cart-noun>productos</span></p></div><button class="bp-x" data-close-cart aria-label="Cerrar">×</button></header>' +
       '<div class="bp-cart-body"><div id="bp-cart-items"></div><div id="bp-cart-foot"><div class="bp-totals"><span>Total</span><strong data-cart-total>$0</strong></div>' +
-      '<p class="bp-form-title">Tus datos <small>(opcional, nos ayuda a despachar más rápido)</small></p>' +
-      '<div class="bp-form"><label><span>Nombre</span><input name="nombre" autocomplete="name" placeholder="Tu nombre"></label><label><span>Ciudad</span><input name="ciudad" autocomplete="address-level2" placeholder="Ej: Bogotá"></label><label class="full"><span>Dirección</span><input name="direccion" autocomplete="street-address" placeholder="Barrio, calle, número"></label><label class="full"><span>Notas</span><input name="notas" placeholder="Algo que debamos saber"></label></div>' +
+      '<p class="bp-form-title">Tus datos</p>' +
+      '<div class="bp-form"><label><span>Nombre</span><input name="nombre" autocomplete="name" placeholder="Tu nombre" required aria-required="true"><small class="bp-field-err" data-err="nombre" hidden></small></label><label><span>Ciudad</span><input name="ciudad" autocomplete="address-level2" placeholder="Ej: Bogotá" required aria-required="true"><small class="bp-field-err" data-err="ciudad" hidden></small></label><label class="full"><span>Dirección</span><input name="direccion" autocomplete="street-address" placeholder="Barrio, calle, número" required aria-required="true"><small class="bp-field-err" data-err="direccion" hidden></small></label><label class="full"><span>Notas</span><input name="notas" placeholder="Algo que debamos saber"></label></div>' +
+      '<div class="bp-pay" id="bp-pay">' +
+      '<p class="bp-pay-label" id="bp-pay-label">Método de pago</p>' +
+      '<div class="bp-pay-opts" id="bp-pay-opts" role="radiogroup" aria-labelledby="bp-pay-label" aria-required="true">' + payButtons() + "</div>" +
+      '<p class="bp-pay-err" data-err="pago" hidden role="status" aria-live="polite"></p>' +
+      '<p class="bp-pay-err" data-err="contra" hidden role="status" aria-live="polite"></p>' +
+      "</div>" +
+      '<p class="bp-ship-line">Envío por Servientrega a todo el país</p>' +
       '<a id="bp-wa" class="bp-wa" target="_blank" rel="noopener" href="#"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.3z"/></svg><span>Confirmar pedido por WhatsApp</span></a>' +
-      '<p class="bp-note">El pago y el envío se coordinan por WhatsApp. Envíos a toda Colombia.</p><button class="bp-clear" data-clear>Vaciar carrito</button></div></div></aside>' +
+      '<p class="bp-note">El pago y el envío se coordinan por WhatsApp. Envíos por Servientrega a toda Colombia.</p><button class="bp-clear" data-clear>Vaciar carrito</button></div></div></aside>' +
       '<div id="bp-lightbox" class="bp-lightbox" data-close-lb><button class="bp-x" data-close-lb aria-label="Cerrar">×</button><img alt="Flyer del producto"></div>';
     while (d.firstChild) document.body.appendChild(d.firstChild);
-    $$(".bp-form input").forEach(function (inp) { inp.value = customer[inp.name] || ""; inp.addEventListener("input", function () { customer[inp.name] = inp.value.trim(); save(CUST_KEY, customer); var w = $("#bp-wa"); if (w) w.href = waLink(buildMessage()); }); });
+    $$(".bp-form input").forEach(function (inp) {
+      inp.value = customer[inp.name] || "";
+      inp.addEventListener("input", function () {
+        customer[inp.name] = inp.value.trim();
+        save(CUST_KEY, customer);
+        renderOrderUI();
+      });
+    });
+  }
+
+  function focusIssue(issue) {
+    var target = issue && $(issue.el);
+    if (!target) target = $("#bp-pay-opts");
+    var body = $(".bp-cart-body");
+    if (target && target.scrollIntoView) target.scrollIntoView({ block: "center", behavior: "smooth" });
+    var focusEl = target && (target.matches("input,button") ? target : $("input,button", target) || target);
+    if (focusEl && focusEl.focus) {
+      try { focusEl.focus({ preventScroll: true }); } catch (err) { focusEl.focus(); }
+    }
+  }
+
+  function blockOrder(e) {
+    if (e) e.preventDefault();
+    triedOrder = true;
+    if (!document.body.classList.contains("cart-open")) openCart();
+    renderOrderUI();
+    var issues = orderIssues();
+    if (issues[0]) focusIssue(issues[0]);
+    return false;
   }
 
   function bind() {
     document.addEventListener("click", function (e) {
-      var t = e.target.closest("[data-add],[data-inc],[data-dec],[data-del],[data-cat],[data-open-cart],[data-close-cart],[data-clear],[data-flyer],[data-close-lb],[data-wa-hello],#bp-wa");
+      var t = e.target.closest("[data-add],[data-inc],[data-dec],[data-del],[data-cat],[data-open-cart],[data-close-cart],[data-clear],[data-flyer],[data-close-lb],[data-wa-hello],[data-pay],#bp-wa");
       if (!t) return;
       if (t.dataset.add) return add(t.dataset.add);
       if (t.dataset.inc) { setQty(t.dataset.inc, (cart[t.dataset.inc] || 0) + 1); return bump(); }
@@ -158,14 +278,18 @@
       if (t.hasAttribute("data-close-cart")) return closeCart();
       if (t.hasAttribute("data-clear")) { if (confirm("¿Vaciar el carrito?")) { cart = {}; save(CART_KEY, cart); renderProducts(); fillCtrls(); renderCart(); } return; }
       if (t.dataset.flyer) { var lb = $("#bp-lightbox"); $("img", lb).src = CFG.IMG_BASE + "flyers/" + t.dataset.flyer; lb.classList.add("is-on"); return; }
+      if (t.dataset.pay) { e.preventDefault(); setPay(t.dataset.pay); return; }
       if (t.hasAttribute("data-wa-hello")) { e.preventDefault(); window.open(waLink("¡Hola " + CFG.STORE_NAME + "! 💖 Quiero información sobre sus productos."), "_blank"); return; }
-      if (t.id === "bp-wa" && !count()) { e.preventDefault(); }
+      if (t.id === "bp-wa") {
+        if (!count() || orderIssues().length) return blockOrder(e);
+      }
     });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeCart(); var lb = $("#bp-lightbox"); if (lb) lb.classList.remove("is-on"); } });
     var s = $("#bp-search"); if (s) s.addEventListener("input", function () { query = s.value.trim(); renderProducts(); });
     $$("[data-wa-link]").forEach(function (a) { a.href = waLink(); });
     $$("[data-ig-link]").forEach(function (a) { a.href = CFG.INSTAGRAM_URL; });
     renderSocial();
+    renderOrderUI();
   }
 
   var ICONS = {
@@ -186,6 +310,8 @@
   window.BP = {
     init: function (o) { for (var k in o) opts[k] = o[k]; injectShell(); renderPills(); renderProducts(); fillCtrls(); renderCart(); bind(); },
     fmt: fmt, buildMessage: buildMessage, waLink: waLink, total: total, count: count, lines: lines,
-    _setCart: function (c) { cart = c; save(CART_KEY, cart); renderProducts(); fillCtrls(); renderCart(); }, openCart: openCart
+    payMethods: PAY_METHODS, isBogota: isBogota, orderIssues: orderIssues,
+    _setCart: function (c) { cart = c; save(CART_KEY, cart); renderProducts(); fillCtrls(); renderCart(); },
+    _setPay: setPay, openCart: openCart
   };
 })();
