@@ -1,5 +1,5 @@
 /* Chrome and theme shared by home, product and category pages. Pink + gold. */
-:root{--bg:#faf4ee;--surface:#fffdf9;--ink:#2e2a2b;--ink2:#4a4345;--muted:#74686a;--pink:#d9779a;--pink2:#e48aa8;--blush2:#f7d6e0;--gold3:#8a6430;--rose:#b5485f;--blush:#f3dcd8;--gold:#b8925a;--gold2:#d9bd8c;--line:#ecdccf;
+:root{--bg:#faf4ee;--surface:#fffdf9;--ink:#2e2a2b;--ink2:#4a4345;--muted:#74686a;--pink:#d9779a;--pink2:#e48aa8;--blush2:#f7d6e0;--gold3:#7e5a2c;--rose:#b5485f;--blush:#f3dcd8;--gold:#8a6430;--gold2:#d9bd8c;--line:#ecdccf;
 --dark:linear-gradient(135deg,#eba0b9 0%,#d9779a 100%);--goldg:linear-gradient(135deg,#e6cb98 0%,#c9a46a 50%,#b8925a 100%);
 --font-head:"Bricolage Grotesque",system-ui,sans-serif;--font-serif:"Cormorant Garamond",Georgia,serif;--font-body:"DM Sans",system-ui,sans-serif;--font-script:"Allura","Brush Script MT",cursive}
 h1,h2,h3{font-family:var(--font-head);letter-spacing:-.03em}
@@ -70,7 +70,7 @@ footer .soc{width:46px;height:46px;background:rgba(255,255,255,.45);color:var(--
 footer .soc:hover{background:var(--pink);color:var(--ink)}
 footer small{opacity:.8}
 footer .fnav{margin:0 0 12px;font-size:14px;font-weight:700}
-footer .fnav a{color:var(--gold3);text-decoration:none;border-bottom:1px solid rgba(138,100,48,.35)}
+footer .fnav a{color:var(--gold3);text-decoration:none;border-bottom:1px solid rgba(126,90,44,.4)}
 footer .fnav a:hover{color:var(--rose);border-bottom-color:var(--rose)}
 .fnav-cats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 14px}
 

@@ -119,3 +119,9 @@ a{color:inherit}
 .steps{display:grid;gap:12px;grid-template-columns:1fr;counter-reset:s}
 @media(min-width:720px){.steps{grid-template-columns:repeat(3,1fr)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Pedir por WhatsApp on product cards */
+.bp-wa-product{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;font-weight:700;color:#187a45;text-decoration:none;line-height:1.2}
+.bp-wa-product:hover{color:#0f5c32;text-decoration:underline}
+.b-wa{background:#25D366;color:#fff;box-shadow:0 12px 24px -12px rgba(37,211,102,.7)}
+.b-wa:hover{color:#fff}

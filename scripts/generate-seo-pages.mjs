@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { LEGAL_PAGES } from "./legal-bodies.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -30,6 +31,15 @@ function escAttr(s) { return esc(s); }
 function fullName(p) { return p.name + (p.variant && !p.kit ? " – " + p.variant : ""); }
 function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 function productUrl(p) { return `/producto/${p.id}/`; }
+function productLabel(p) { return `${p.brand} · ${fullName(p)}${p.size ? " (" + p.size + ")" : ""}`; }
+function productWaHref(p) {
+  const text = `¡Hola ${CFG.STORE_NAME}! 💖\nQuiero pedir este producto:\n\nProducto: ${productLabel(p)}\nPrecio: ${fmt(p.price)} COP\nPágina: ${abs(productUrl(p))}\n\n¿Me confirman disponibilidad, pago y envío? ¡Gracias! ✨`;
+  return `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+const WA_ICO = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.3z"/></svg>';
+function waProductBtn(p, cls) {
+  return `<a class="${cls || "bp-wa-product"}" href="${productWaHref(p)}" target="_blank" rel="noopener">${WA_ICO}<span>Pedir por WhatsApp</span></a>`;
+}
 function catUrl(id) { return `/categoria/${id}/`; }
 function abs(u) { return ORIGIN + u; }
 function imgAbs(file) { return `${ORIGIN}/images/${file}`; }
@@ -115,6 +125,7 @@ function chromeFooter() {
   <p class="script">Más que belleza, es confianza</p>
   <div class="links" data-social></div>
   <p class="fnav fnav-cats">${catLinks}</p>
+  <p class="fnav"><a href="/legal/privacidad/">Política de privacidad</a><span aria-hidden="true"> · </span><a href="/legal/terminos/">Términos y condiciones</a><span aria-hidden="true"> · </span><a href="/legal/envios-y-devoluciones/">Envíos y devoluciones</a></p>
   <p class="fnav"><a href="/#pagos">Métodos de pago</a><span aria-hidden="true"> · </span><a href="/#catalogo">Catálogo</a></p>
   <p style="margin:0 0 14px;font-size:14px">WhatsApp 311 546 1244 · @tiendabeautyplug</p>
   <small>© 2026 The Beauty Plug Collective · Bogotá, Colombia</small>
@@ -138,7 +149,7 @@ function cardHtml(p, i) {
     `</div><div class="bp-info"><p class="bp-brand">${esc(p.brand)}</p><h3 class="bp-name"><a href="${href}">${esc(p.name)}</a></h3>` +
     variant +
     `<p class="bp-desc">${esc(p.desc)}</p>` +
-    `<div class="bp-row"><span class="bp-price">${fmt(p.price)}</span><span class="bp-ctrl" data-ctrl="${esc(p.id)}"><button class="bp-add" data-add="${esc(p.id)}" aria-label="Agregar ${escAttr(name)}"><span>Agregar</span></button></span></div></div></article>`;
+    `<div class="bp-row"><span class="bp-price">${fmt(p.price)}</span><span class="bp-ctrl" data-ctrl="${esc(p.id)}"><button class="bp-add" data-add="${esc(p.id)}" aria-label="Agregar ${escAttr(name)}"><span>Agregar</span></button></span></div>${waProductBtn(p)}</div></article>`;
 }
 
 const CAT_INTRO = {
@@ -238,7 +249,7 @@ ${chromeNav()}
       <div class="pdp-actions">
         <span class="bp-ctrl" data-ctrl="${esc(p.id)}"><button class="bp-add" data-add="${esc(p.id)}" aria-label="Agregar ${escAttr(name)}"><span>Agregar</span></button></span>
         <span class="pdp-add-label">Agregar al carrito</span>
-        <a class="b b-line" data-wa-link href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+        ${waProductBtn(p, "b b-wa")}
       </div>
       <p class="pdp-note">Producto original. Arma tu pedido aquí, confírmalo por WhatsApp y coordinamos el pago y el envío. Envíos a toda Colombia desde Bogotá.</p>
     </div>
@@ -295,11 +306,48 @@ ${chromeFooter()}`;
   writeFile(`categoria/${cat.id}/index.html`, html);
 }
 
+
+function legalPage(page) {
+  const url = abs(`/legal/${page.slug}/`);
+  const image = `${ORIGIN}/images/brand/og-image.jpg`;
+  const crumbs = [
+    { name: "Inicio", url: ORIGIN + "/" },
+    { name: page.heading, url },
+  ];
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: page.heading,
+    description: page.description,
+    url,
+    inLanguage: "es-CO",
+    isPartOf: { "@type": "WebSite", name: CFG.STORE_NAME, url: ORIGIN + "/" },
+  };
+  const html = `${head({
+    title: page.title,
+    description: page.description,
+    url,
+    image,
+    type: "website",
+    jsonld: jsonLd(ld) + "\n" + jsonLd(breadcrumbJsonLd(crumbs)),
+  })}
+<body>
+${chromeNav()}
+<main class="legal"><div class="wrap legal-inner">
+  <nav class="pdp-crumb" aria-label="Miga de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span>${esc(page.heading)}</nav>
+  <h1>${esc(page.heading)}</h1>
+  ${page.body}
+</div></main>
+${chromeFooter()}`;
+  writeFile(`legal/${page.slug}/index.html`, html);
+}
+
 function sitemap() {
   const urls = [
     { loc: ORIGIN + "/", pri: "1.0" },
     ...CATS.filter((c) => c.id !== "todos").map((c) => ({ loc: abs(catUrl(c.id)), pri: "0.8" })),
     ...PRODUCTS.map((p) => ({ loc: abs(productUrl(p)), pri: "0.7" })),
+    ...LEGAL_PAGES.map((page) => ({ loc: abs(`/legal/${page.slug}/`), pri: "0.4" })),
   ];
   const body = urls.map((u) => `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${LASTMOD}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${u.pri}</priority>\n  </url>`).join("\n");
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
@@ -315,8 +363,9 @@ for (const dir of ["producto", "categoria"]) {
 
 PRODUCTS.forEach(productPage);
 CATS.filter((c) => c.id !== "todos").forEach(categoryPage);
+LEGAL_PAGES.forEach(legalPage);
 const n = sitemap();
-console.log(`Generated ${PRODUCTS.length} product pages, ${CATS.length - 1} category pages, sitemap ${n} URLs.`);
+console.log(`Generated ${PRODUCTS.length} product pages, ${CATS.length - 1} category pages, ${LEGAL_PAGES.length} legal pages, sitemap ${n} URLs.`);
 
 function updateHomeItemList() {
   const indexPath = path.join(ROOT, "index.html");

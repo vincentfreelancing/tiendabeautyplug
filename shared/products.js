@@ -15,7 +15,7 @@ window.BP_CONFIG = {
     instagram: "https://www.instagram.com/tiendabeautyplug/",
     whatsapp:  "https://wa.me/573115461244",
     tiktok:    "https://www.tiktok.com/@tiendabeautyplug",
-    facebook:  ""    // ej: "https://www.facebook.com/tiendabeautyplug"
+    facebook:  "https://www.facebook.com/profile.php?id=100072354423027"
   }
 };
 

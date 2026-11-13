@@ -26,3 +26,14 @@
 .pdp-add-label{font-weight:700;font-size:14px;color:var(--ink2)}
 
 @media(max-width:600px){.pdp-media{padding:16px 12px 18px}}
+
+.legal{padding:28px 0 60px}
+.legal-inner{max-width:760px}
+.legal h1{font-family:var(--font-serif);font-weight:500;font-size:clamp(28px,6vw,44px);line-height:1.1;margin:0 0 8px;color:var(--ink)}
+.legal .updated{color:var(--muted);margin:0 0 22px;font-size:14px}
+.legal h2{font-size:22px;margin:28px 0 10px;font-weight:800}
+.legal p,.legal li{font-size:15.5px;line-height:1.65;color:var(--ink2)}
+.legal p{margin:0 0 14px}
+.legal ul{margin:0 0 16px;padding-left:1.2em}
+.legal a{color:var(--gold3);text-decoration:none;border-bottom:1px solid rgba(126,90,44,.4)}
+.legal a:hover{color:var(--rose);border-bottom-color:var(--rose)}
