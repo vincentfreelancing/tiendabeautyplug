@@ -82,8 +82,8 @@ export const LEGAL_PAGES = [
 <h2>4. Precios y pago</h2>
 <p>Los precios están en pesos colombianos (COP). El pago se coordina por WhatsApp, mediante transferencia a Bancolombia, Nequi o Bre-B (llave), o contra entrega en efectivo solo en Bogotá. No publicamos números de cuenta ni llaves en la página. Podremos pedir el comprobante de pago antes de despachar, excepto en contra entrega.</p>
 
-<h2>5. Envíos</h2>
-<p>Los envíos se hacen por Servientrega a toda Colombia, desde Bogotá. Los plazos, costos y la política de devoluciones están en <a href="/legal/envios-y-devoluciones/">Envíos y devoluciones</a>.</p>
+<h2>5. Envíos y devoluciones</h2>
+<p>Los envíos se hacen por Servientrega a toda Colombia, desde Bogotá, y tardan unos dos (2) días hábiles en llegar. El costo del envío y las condiciones de cambios o devoluciones se acuerdan caso por caso por WhatsApp. Los detalles están en <a href="/legal/envios-y-devoluciones/">Envíos y devoluciones</a>.</p>
 
 <h2>6. Responsabilidad</h2>
 <p>Hacemos esfuerzos razonables para que la información del sitio sea exacta. En la medida permitida por la Ley 1480 de 2011, nuestra responsabilidad se limita al valor del producto adquirido, sin perjuicio de los derechos irrenunciables del consumidor.</p>
@@ -107,24 +107,23 @@ export const LEGAL_PAGES = [
 <h2>1. Envíos</h2>
 <ul>
   <li>Despachamos desde Bogotá, Colombia, a todo el país a través de Servientrega.</li>
-  <li>Tiempo de preparación: [X días hábiles] después de confirmado el pago (o de confirmado el pedido, en contra entrega).</li>
-  <li>Tiempo de tránsito estimado: [X días hábiles], según la ciudad de destino. Es una estimación y puede variar por la transportadora.</li>
-  <li>Costo de envío: [costo de envío]. Envío gratis desde [monto para envío gratis], si aplica.</li>
+  <li>El envío tarda unos dos (2) días hábiles en llegar a cualquier destino en Colombia, una vez confirmado el pago (o confirmado el pedido, en contra entrega). Este plazo es una estimación y puede variar levemente por la transportadora.</li>
+  <li>El costo del envío y cualquier condición particular se acuerdan caso por caso por WhatsApp, al confirmar tu pedido. Escríbenos al <a href="https://wa.me/573115461244">311 546 1244</a>.</li>
   <li>La contra entrega en efectivo está disponible solo en Bogotá.</li>
 </ul>
-<p>Al recibir el paquete, revísalo. Si llega dañado, incompleto o no corresponde a tu pedido, avísanos el mismo día al WhatsApp 311 546 1244, con fotos del empaque y del producto.</p>
+<p>Al recibir el paquete, revísalo. Si llega dañado, incompleto o no corresponde a tu pedido, avísanos el mismo día por WhatsApp al <a href="https://wa.me/573115461244">311 546 1244</a>, con fotos del empaque y del producto. Toda novedad de entrega se tramita por ese canal.</p>
 
 <h2>2. Derecho de retracto (Ley 1480 de 2011)</h2>
 <p>En las ventas a distancia, tienes derecho de retracto dentro de los cinco (5) días hábiles siguientes a la entrega, en los términos del artículo 47 del Estatuto del Consumidor (Ley 1480 de 2011). Este plazo legal no se reduce.</p>
-<p>Para ejercerlo, escríbenos al WhatsApp 311 546 1244 o a [correo de protección de datos] dentro de ese plazo, indicando tu nombre, el pedido y tu decisión de retractarte. El producto deberá devolverse en las mismas condiciones, con su empaque y etiquetas, y sin haber sido usado.</p>
-<p>La ley contempla casos en los que el retracto no aplica, por ejemplo bienes de uso personal que se hayan abierto o usado, cuando su devolución afecta razones de higiene o salud. Los cosméticos o productos de cuidado personal abiertos o usados pueden quedar excluidos. Te confirmaremos si tu caso está cubierto.</p>
-<p>El reembolso se hará por el mismo medio de pago o por transferencia, dentro de los [X días hábiles para el reembolso] siguientes a recibir el producto en buen estado. Quién asume el costo del envío de devolución en el retracto: [quién asume el costo del envío en caso de retracto]. Dirección de devolución: [dirección de devolución en Bogotá].</p>
+<p>Para ejercerlo, escríbenos por WhatsApp al <a href="https://wa.me/573115461244">311 546 1244</a> dentro de ese plazo, indicando tu nombre, el pedido y tu decisión de retractarte. Las solicitudes de retracto se tramitan únicamente por mensajes de WhatsApp. El producto deberá devolverse en las mismas condiciones, con su empaque y etiquetas, y sin haber sido usado.</p>
+<p>La ley contempla casos en los que el retracto no aplica, por ejemplo bienes de uso personal que se hayan abierto o usado, cuando su devolución afecta razones de higiene o salud. Los cosméticos o productos de cuidado personal abiertos o usados pueden quedar excluidos. Te confirmaremos por WhatsApp si tu caso está cubierto.</p>
+<p>El reembolso, el costo del envío de devolución y las demás condiciones se acuerdan caso por caso por WhatsApp, según tu situación. Te indicaremos por ese mismo canal cómo devolver el producto y cómo se hará el reembolso.</p>
 
 <h2>3. Garantía legal y productos defectuosos</h2>
-<p>Los productos tienen la garantía legal del Estatuto del Consumidor cuando presenten fallas de calidad, idoneidad o seguridad. Contáctanos por WhatsApp dentro de [X días para reportar fallas] de recibido el pedido, o en el plazo legal de garantía si este resulta más favorable, con una descripción y fotos. Si el producto es defectuoso de origen, coordinaremos el cambio, la reparación o la devolución del dinero, según la ley. En estos casos, [quién asume el costo del envío por producto defectuoso].</p>
+<p>Los productos tienen la garantía legal del Estatuto del Consumidor cuando presenten fallas de calidad, idoneidad o seguridad. Si crees que un producto está defectuoso, escríbenos siempre por WhatsApp al <a href="https://wa.me/573115461244">311 546 1244</a>, con una descripción y fotos. El reporte, el cambio, la reparación o la devolución del dinero, y quién asume el costo del envío, se acuerdan caso por caso por ese canal, según la ley y las circunstancias de cada pedido.</p>
 
-<h2>4. Política comercial de cambios (adicional al retracto)</h2>
-<p>Además del retracto legal, aceptamos cambios o devoluciones por arrepentimiento o preferencia hasta [X días de política comercial] después de la entrega, siempre que el producto esté sin usar, sellado y en su empaque original. [condiciones adicionales de la política comercial]. El costo de ese envío lo asume [quién asume el costo del envío en cambios comerciales].</p>
+<h2>4. Cambios y devoluciones comerciales</h2>
+<p>Además del retracto legal, los cambios o devoluciones por arrepentimiento o preferencia se evalúan caso por caso. Deben solicitarse siempre por mensajes de WhatsApp al <a href="https://wa.me/573115461244">311 546 1244</a>. El costo del envío y las condiciones (por ejemplo, que el producto esté sin usar y en su empaque original) se acuerdan por ese mismo canal, según cada caso.</p>
 `
   }
 ];
