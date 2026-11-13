@@ -28,6 +28,9 @@ a{color:inherit}
 .bp-info{display:flex;flex-direction:column;flex:1;padding:12px 12px 14px}
 .bp-brand{margin:0;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
 .bp-name{margin:4px 0 2px;font-size:15px;line-height:1.25}
+.bp-name a{color:inherit;text-decoration:none}
+.bp-name a:hover{color:var(--rose)}
+.bp-media>a{display:block;width:100%;height:100%;position:relative;z-index:1}
 .bp-variant{margin:0;font-size:12.5px;font-weight:600}
 .bp-desc{margin:4px 0 10px;font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .bp-row{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}

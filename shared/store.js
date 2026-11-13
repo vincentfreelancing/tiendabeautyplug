@@ -19,6 +19,7 @@
   function nProductos(n) { return n + (n === 1 ? " producto" : " productos"); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fullName(p) { return p.name + (p.variant && !p.kit ? " – " + p.variant : ""); }
+  function productUrl(p) { return "/producto/" + p.id + "/"; }
   function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
@@ -104,10 +105,10 @@
   }
   function card(p, i) {
     return '<article class="bp-card' + (p.kit ? " is-kit" : "") + '" data-id="' + p.id + '" style="--i:' + (i % 12) + '">' +
-      '<div class="bp-media"><img src="' + CFG.IMG_BASE + p.img + '" alt="' + esc(p.brand + " " + fullName(p)) + '" loading="lazy" width="480" height="600">' +
+      '<div class="bp-media"><a href="' + productUrl(p) + '"><img src="' + CFG.IMG_BASE + p.img + '" alt="' + esc(p.brand + " " + fullName(p)) + '" loading="lazy" width="480" height="600"></a>' +
       (p.kit ? '<span class="bp-badge">Kit completo</span>' : "") +
       (p.flyer ? '<button class="bp-flyer" data-flyer="' + p.flyer + '" aria-label="Ver flyer">Ver flyer</button>' : "") + "</div>" +
-      '<div class="bp-info"><p class="bp-brand">' + esc(p.brand) + '</p><h3 class="bp-name">' + esc(p.name) + "</h3>" +
+      '<div class="bp-info"><p class="bp-brand">' + esc(p.brand) + '</p><h3 class="bp-name"><a href="' + productUrl(p) + '">' + esc(p.name) + "</a></h3>" +
       (p.variant ? '<p class="bp-variant">' + esc(p.variant) + (p.size && !p.kit ? " · " + esc(p.size) : "") + "</p>" : (p.size ? '<p class="bp-variant">' + esc(p.size) + "</p>" : "")) +
       '<p class="bp-desc">' + esc(p.desc) + "</p>" +
       '<div class="bp-row"><span class="bp-price">' + fmt(p.price) + '</span><span class="bp-ctrl" data-ctrl="' + p.id + '">' + ctrl(p) + "</span></div></div></article>";
@@ -309,7 +310,7 @@
 
   window.BP = {
     init: function (o) { for (var k in o) opts[k] = o[k]; injectShell(); renderPills(); renderProducts(); fillCtrls(); renderCart(); bind(); },
-    fmt: fmt, buildMessage: buildMessage, waLink: waLink, total: total, count: count, lines: lines,
+    fmt: fmt, productUrl: productUrl, buildMessage: buildMessage, waLink: waLink, total: total, count: count, lines: lines,
     payMethods: PAY_METHODS, isBogota: isBogota, orderIssues: orderIssues,
     _setCart: function (c) { cart = c; save(CART_KEY, cart); renderProducts(); fillCtrls(); renderCart(); },
     _setPay: setPay, openCart: openCart

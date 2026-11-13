@@ -9,7 +9,7 @@ window.BP_CONFIG = {
   STORE_NAME: "The Beauty Plug Collective",
   INSTAGRAM_URL: "https://www.instagram.com/tiendabeautyplug/",
   TAGLINE: "Más que belleza, es confianza",
-  IMG_BASE: "images/",                    // ruta relativa desde cada carpeta (final/, opcion-X/)
+  IMG_BASE: "/images/",                   // ruta absoluta desde la raíz del sitio
   /* Redes sociales: el ícono solo aparece si la URL tiene valor. */
   SOCIAL: {
     instagram: "https://www.instagram.com/tiendabeautyplug/",
