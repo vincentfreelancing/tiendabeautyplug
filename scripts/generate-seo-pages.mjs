@@ -3,6 +3,7 @@
  * Generates static, indexable product and category pages plus sitemap.xml
  * from shared/products.js. Does not change prices, names or descriptions.
  * Run from the site root: node scripts/generate-seo-pages.mjs
+ * Sale markup follows build time (or BP_NOW=ISO-8601 for a test rebuild).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -21,6 +22,8 @@ vm.runInContext(fs.readFileSync(path.join(ROOT, "shared/products.js"), "utf8"), 
 const CFG = ctx.window.BP_CONFIG;
 const PRODUCTS = ctx.window.BP_PRODUCTS;
 const CATS = ctx.window.BP_CATEGORIES;
+const SALE = ctx.window.BP_SALE;
+const BUILD_NOW = Date.parse(process.env.BP_NOW || "") || Date.now();
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
@@ -30,11 +33,13 @@ function esc(s) {
 function escAttr(s) { return esc(s); }
 function fullName(p) { return p.name + (p.variant && !p.kit ? " – " + p.variant : ""); }
 function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-function isSale(p) { return !!(p.wasPrice && p.wasPrice > p.price); }
+function isSale(p) { return SALE.isSale(p, BUILD_NOW); }
+function unitPrice(p) { return SALE.unitPrice(p, BUILD_NOW); }
+function wasOf(p) { return SALE.wasPrice(p, BUILD_NOW); }
 function priceHTML(p) {
-  if (!isSale(p)) return fmt(p.price);
-  return `<span class="bp-price-was">${fmt(p.wasPrice)}</span>` +
-    `<span class="bp-price-now">${fmt(p.price)}</span>` +
+  if (!isSale(p)) return fmt(unitPrice(p));
+  return `<span class="bp-price-was">${fmt(wasOf(p))}</span>` +
+    `<span class="bp-price-now">${fmt(unitPrice(p))}</span>` +
     `<span class="bp-sale-badge">${esc(p.saleBadge || "Oferta")}</span>`;
 }
 function saleMediaBadge(p) {
@@ -42,15 +47,15 @@ function saleMediaBadge(p) {
 }
 function pdpPriceHTML(p) {
   const cop = ' <span style="font-size:14px;font-weight:700;color:var(--muted)">COP</span>';
-  if (!isSale(p)) return fmt(p.price) + cop;
-  return `<span class="bp-price-was">${fmt(p.wasPrice)}</span>` +
-    `<span class="bp-price-now">${fmt(p.price)}${cop}</span>` +
+  if (!isSale(p)) return fmt(unitPrice(p)) + cop;
+  return `<span class="bp-price-was">${fmt(wasOf(p))}</span>` +
+    `<span class="bp-price-now">${fmt(unitPrice(p))}${cop}</span>` +
     `<span class="bp-sale-badge">${esc(p.saleBadge || "Oferta")}</span>`;
 }
 function productUrl(p) { return `/producto/${p.id}/`; }
 function productLabel(p) { return `${p.brand} · ${fullName(p)}${p.size ? " (" + p.size + ")" : ""}`; }
 function productWaHref(p) {
-  const text = `¡Hola ${CFG.STORE_NAME}! 💖\nQuiero pedir este producto:\n\nProducto: ${productLabel(p)}\nPrecio: ${fmt(p.price)} COP\nPágina: ${abs(productUrl(p))}\n\n¿Me confirman disponibilidad, pago y envío? ¡Gracias! ✨`;
+  const text = `¡Hola ${CFG.STORE_NAME}! 💖\nQuiero pedir este producto:\n\nProducto: ${productLabel(p)}\nPrecio: ${fmt(unitPrice(p))} COP\nPágina: ${abs(productUrl(p))}\n\n¿Me confirman disponibilidad, pago y envío? ¡Gracias! ✨`;
   return `https://wa.me/${CFG.WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 const WA_ICO = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.3z"/></svg>';
@@ -121,12 +126,48 @@ ${FONTS}
 <link rel="stylesheet" href="/shared/base.css">
 <link rel="stylesheet" href="/shared/theme.css">
 <link rel="stylesheet" href="/shared/product-page.css">
+<link rel="stylesheet" href="/shared/black-friday.css">
 ${jsonld}
 </head>`;
 }
 
+function pad2(n) { return String(n).padStart(2, "0"); }
+function bfBannerHtml(at = BUILD_NOW) {
+  const start = Date.parse(CFG.BLACK_FRIDAY_START || "");
+  const end = Date.parse(CFG.BLACK_FRIDAY_END || "");
+  if (Number.isNaN(start)) return "";
+  if (!Number.isNaN(end) && at > end) {
+    return `<!--bp-bf-banner-->\n<div class="bp-bf-banner is-over" id="bp-bf-banner" role="region" aria-label="Black Friday" hidden></div>\n<!--/bp-bf-banner-->`;
+  }
+  const live = at >= start;
+  let units = "";
+  if (!live) {
+    let s = Math.max(0, Math.floor((start - at) / 1000));
+    const d = Math.floor(s / 86400); s -= d * 86400;
+    const h = Math.floor(s / 3600); s -= h * 3600;
+    const m = Math.floor(s / 60); s -= m * 60;
+    units = `<div class="bp-bf-units" data-bf-units>` +
+      `<span class="bp-bf-unit"><b data-bf="d">${d}</b><span>días</span></span>` +
+      `<span class="bp-bf-unit"><b data-bf="h">${pad2(h)}</b><span>horas</span></span>` +
+      `<span class="bp-bf-unit"><b data-bf="m">${pad2(m)}</b><span>min</span></span>` +
+      `<span class="bp-bf-unit"><b data-bf="s">${pad2(s)}</b><span>seg</span></span>` +
+      `</div>`;
+  } else {
+    units = `<div class="bp-bf-units" data-bf-units hidden></div>`;
+  }
+  const kicker = live ? "BLACK FRIDAY — ¡Ya empezó!" : "Black Friday empieza en";
+  return `<!--bp-bf-banner-->
+<div class="bp-bf-banner${live ? " is-live" : ""}" id="bp-bf-banner" role="region" aria-label="Black Friday">
+  <p class="bp-bf-kicker" data-bf-kicker>${kicker}</p>
+  ${units}
+  <a class="bp-bf-cta" href="/producto/vs-whipped-pure-seduction/">Ver ofertas</a>
+</div>
+<!--/bp-bf-banner-->`;
+}
+
 function chromeNav() {
-  return `<div class="announce">Envíos a <b>toda Colombia</b><span class="sep">•</span>Pide por <b>WhatsApp</b></div>
+  return `${bfBannerHtml()}
+<div class="announce">Envíos a <b>toda Colombia</b><span class="sep">•</span>Pide por <b>WhatsApp</b></div>
 <header class="nav"><div class="wrap">
   <a class="brand" href="/"><img class="mark" src="/images/brand/bp-mark.webp" alt="The Beauty Plug Collective" width="38" height="56"><span>Beauty Plug<small>COLLECTIVE</small></span></a>
   <div class="nav-right"><div data-social></div><button class="navcart" data-open-cart aria-label="Ver carrito"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Carrito <i data-cart-count class="is-zero">0</i></button></div>
@@ -210,7 +251,7 @@ function productJsonLd(p) {
       "@type": "Offer",
       url: abs(productUrl(p)),
       priceCurrency: "COP",
-      price: String(p.price),
+      price: String(unitPrice(p)),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: CFG.STORE_NAME, url: ORIGIN + "/" },
@@ -384,6 +425,28 @@ LEGAL_PAGES.forEach(legalPage);
 const n = sitemap();
 console.log(`Generated ${PRODUCTS.length} product pages, ${CATS.length - 1} category pages, ${LEGAL_PAGES.length} legal pages, sitemap ${n} URLs.`);
 
+
+function updateHomeBlackFriday() {
+  const indexPath = path.join(ROOT, "index.html");
+  let html = fs.readFileSync(indexPath, "utf8");
+  const cssLink = '<link rel="stylesheet" href="shared/black-friday.css">';
+  if (!html.includes("shared/black-friday.css")) {
+    if (html.includes('href="shared/base.css">')) {
+      html = html.replace('href="shared/base.css">', 'href="shared/base.css">\n' + cssLink);
+    } else {
+      html = html.replace("</head>", cssLink + "\n</head>");
+    }
+  }
+  const block = bfBannerHtml();
+  if (html.includes("<!--bp-bf-banner-->")) {
+    html = html.replace(/<!--bp-bf-banner-->[\s\S]*?<!--\/bp-bf-banner-->/, block);
+  } else if (html.includes('<div class="announce">')) {
+    html = html.replace('<div class="announce">', block + '\n<div class="announce">');
+  } else {
+    html = html.replace("<body>", "<body>\n" + block);
+  }
+  fs.writeFileSync(indexPath, html);
+}
 function updateHomeItemList() {
   const indexPath = path.join(ROOT, "index.html");
   let html = fs.readFileSync(indexPath, "utf8");
@@ -409,3 +472,4 @@ function updateHomeItemList() {
 }
 
 updateHomeItemList();
+updateHomeBlackFriday();

@@ -16,7 +16,10 @@ window.BP_CONFIG = {
     whatsapp:  "https://wa.me/573115461244",
     tiktok:    "https://www.tiktok.com/@tiendabeautyplug",
     facebook:  "https://www.facebook.com/profile.php?id=100072354423027"
-  }
+  },
+  /* Black Friday 2026 (America/Bogota, UTC-5). saleEnd includes Cyber Monday. */
+  BLACK_FRIDAY_START: "2026-11-27T00:00:00-05:00",
+  BLACK_FRIDAY_END:   "2026-11-30T23:59:59-05:00"
 };
 
 window.BP_CATEGORIES = [
@@ -28,12 +31,12 @@ window.BP_CATEGORIES = [
   { id: "otros",      label: "Otros" }
 ];
 
-/* Campos: id, brand, name, variant, desc, size, price, wasPrice, saleBadge, cat, img, kit, flyer */
+/* Campos: id, brand, name, variant, desc, size, price, salePrice, wasPrice, saleBadge, saleStart, saleEnd, cat, img, kit, flyer */
 window.BP_PRODUCTS = [
   // ---------- Cuerpo · Victoria's Secret Whipped ----------
   { id:"vs-whipped-bare-vanilla",   brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Bare Vanilla",   desc:"Cálida, dulce y envolvente.",  size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-bare-vanilla.webp",   flyer:"vs-whipped.webp" },
   { id:"vs-whipped-velvet-petals",  brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Velvet Petals",  desc:"Floral, suave y delicada.",    size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-velvet-petals.webp",  flyer:"vs-whipped.webp" },
-  { id:"vs-whipped-pure-seduction", brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Pure Seduction", desc:"Sensual, dulce y atrevida.",   size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-pure-seduction.webp", flyer:"vs-whipped.webp" },
+  { id:"vs-whipped-pure-seduction", brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Pure Seduction", desc:"Sensual, dulce y atrevida.",   size:"236 ml", price:85000, salePrice:76500, wasPrice:85000, saleBadge:"Black Friday -10%", saleStart:"2026-11-27T00:00:00-05:00", saleEnd:"2026-11-30T23:59:59-05:00", cat:"cuerpo", img:"vs-whipped-pure-seduction.webp", flyer:"vs-whipped.webp" },
   { id:"vs-whipped-love-spell",     brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Love Spell",     desc:"Dulce, frutal y romántica.",   size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-love-spell.webp",     flyer:"vs-whipped.webp" },
   // ---------- Cuerpo · VS Fragrance Lotion ----------
   { id:"vs-lotion-bare-vanilla",  brand:"Victoria's Secret", name:"Fragrance Lotion", variant:"Bare Vanilla",  desc:"Dulce, cálida y envolvente.", size:"236 ml", price:70000, cat:"cuerpo", img:"vs-lotion-bare-vanilla.webp",  flyer:"vs-fragrance-lotion.webp" },
@@ -88,3 +91,48 @@ window.BP_PRODUCTS = [
   // ---------- Otros ----------
   { id:"oki-toilet-seat-cover", brand:"Oki", name:"Toilet Seat Cover", variant:"x20", desc:"Cubre inodoros desechables.", size:"20 unidades", price:4500, cat:"otros", img:"oki-toilet-seat-cover.webp", flyer:"maquillaje-2.webp" }
 ];
+
+
+/* Ofertas programadas. El precio de lista (price) no cambia; salePrice solo aplica entre saleStart y saleEnd.
+   Para pruebas locales: ?bp_now=2026-11-27T00:00:00-05:00 o window.BP_NOW (no usar en producción). */
+window.BP_SALE = (function () {
+  function nowMs() {
+    var raw = "";
+    try { if (typeof window !== "undefined" && window.BP_NOW) raw = window.BP_NOW; } catch (e) {}
+    try {
+      if (!raw && typeof location !== "undefined" && location.search) {
+        var q = new URLSearchParams(location.search).get("bp_now");
+        if (q) raw = q;
+      }
+    } catch (e) {}
+    var t = Date.parse(raw);
+    return isNaN(t) ? Date.now() : t;
+  }
+  function ts(s) { var t = Date.parse(s); return isNaN(t) ? null : t; }
+  function inWindow(start, end, at) {
+    var t = at == null ? nowMs() : at;
+    var a = start ? ts(start) : null;
+    var b = end ? ts(end) : null;
+    if (a != null && t < a) return false;
+    if (b != null && t > b) return false;
+    return true;
+  }
+  function isSale(p, at) {
+    if (!p) return false;
+    if (p.salePrice && p.salePrice < p.price) {
+      if (p.saleStart || p.saleEnd) return inWindow(p.saleStart, p.saleEnd, at);
+      return true;
+    }
+    return !!(p.wasPrice && p.wasPrice > p.price);
+  }
+  function unitPrice(p, at) {
+    if (isSale(p, at) && p.salePrice && p.salePrice < p.price) return p.salePrice;
+    return p.price;
+  }
+  function wasPrice(p, at) {
+    if (!isSale(p, at)) return null;
+    if (p.salePrice && p.salePrice < p.price) return p.wasPrice || p.price;
+    return p.wasPrice;
+  }
+  return { nowMs: nowMs, inWindow: inWindow, isSale: isSale, unitPrice: unitPrice, wasPrice: wasPrice };
+})();

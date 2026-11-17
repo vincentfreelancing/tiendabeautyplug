@@ -16,11 +16,21 @@
   var payById = {}; PAY_METHODS.forEach(function (m) { payById[m.id] = m; });
 
   function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-  function isSale(p) { return !!(p.wasPrice && p.wasPrice > p.price); }
+  var SALE = window.BP_SALE || {};
+  function isSale(p) { return SALE.isSale ? SALE.isSale(p) : !!(p.wasPrice && p.wasPrice > p.price); }
+  function unitPrice(p) { return SALE.unitPrice ? SALE.unitPrice(p) : p.price; }
+  function wasOf(p) { return SALE.wasPrice ? SALE.wasPrice(p) : (isSale(p) ? p.wasPrice : null); }
   function priceHTML(p) {
-    if (!isSale(p)) return fmt(p.price);
-    return '<span class="bp-price-was">' + fmt(p.wasPrice) + '</span>' +
-      '<span class="bp-price-now">' + fmt(p.price) + '</span>' +
+    if (!isSale(p)) return fmt(unitPrice(p));
+    return '<span class="bp-price-was">' + fmt(wasOf(p)) + '</span>' +
+      '<span class="bp-price-now">' + fmt(unitPrice(p)) + '</span>' +
+      '<span class="bp-sale-badge">' + esc(p.saleBadge || "Oferta") + "</span>";
+  }
+  function pdpPriceHTML(p) {
+    var cop = ' <span style="font-size:14px;font-weight:700;color:var(--muted)">COP</span>';
+    if (!isSale(p)) return fmt(unitPrice(p)) + cop;
+    return '<span class="bp-price-was">' + fmt(wasOf(p)) + '</span>' +
+      '<span class="bp-price-now">' + fmt(unitPrice(p)) + cop + '</span>' +
       '<span class="bp-sale-badge">' + esc(p.saleBadge || "Oferta") + "</span>";
   }
   function nProductos(n) { return n + (n === 1 ? " producto" : " productos"); }
@@ -37,7 +47,7 @@
   if (payId && !payById[payId]) payId = "";
   var triedOrder = false;
 
-  function lines() { return Object.keys(cart).map(function (id) { var p = byId[id]; return { p: p, qty: cart[id], sub: p.price * cart[id] }; }); }
+  function lines() { return Object.keys(cart).map(function (id) { var p = byId[id]; return { p: p, qty: cart[id], sub: unitPrice(p) * cart[id] }; }); }
   function count() { return lines().reduce(function (a, l) { return a + l.qty; }, 0); }
   function total() { return lines().reduce(function (a, l) { return a + l.sub; }, 0); }
   function payMethod() { return payById[payId] || null; }
@@ -74,7 +84,7 @@
       out.push("Ítem: " + (i + 1));
       out.push("Producto: " + itemName(l));
       out.push("Cantidad: " + l.qty);
-      out.push("Precio: " + fmt(l.p.price));
+      out.push("Precio: " + fmt(unitPrice(l.p)));
       out.push("Subtotal: " + fmt(l.sub));
       out.push("");
     });
@@ -93,7 +103,7 @@
   }
   function waLink(text) { return "https://wa.me/" + CFG.WHATSAPP_NUMBER + (text ? "?text=" + encodeURIComponent(text) : ""); }
   function productWaText(p) {
-    return "¡Hola " + CFG.STORE_NAME + "! 💖\nQuiero pedir este producto:\n\nProducto: " + itemName({ p: p, qty: 1 }) + "\nPrecio: " + fmt(p.price) + " COP\nPágina: https://beautyplug.tienda" + productUrl(p) + "\n\n¿Me confirman disponibilidad, pago y envío? ¡Gracias! ✨";
+    return "¡Hola " + CFG.STORE_NAME + "! 💖\nQuiero pedir este producto:\n\nProducto: " + itemName({ p: p, qty: 1 }) + "\nPrecio: " + fmt(unitPrice(p)) + " COP\nPágina: https://beautyplug.tienda" + productUrl(p) + "\n\n¿Me confirman disponibilidad, pago y envío? ¡Gracias! ✨";
   }
   function productWaLink(p) { return waLink(productWaText(p)); }
   var WA_ICO = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.3z"/></svg>';
@@ -201,7 +211,7 @@
     var box = $("#bp-cart-items"); if (!box) return;
     if (!L.length) { box.innerHTML = '<div class="bp-cart-empty"><div class="bp-cart-empty-ico">🛍️</div><p>Tu carrito está vacío.</p><small>Agrega tus favoritos y confirma tu pedido por WhatsApp.</small></div>'; }
     else box.innerHTML = L.map(function (l) {
-      return '<div class="bp-line"><img src="' + CFG.IMG_BASE + l.p.img + '" alt=""><div class="bp-line-info"><p class="bp-line-brand">' + esc(l.p.brand) + '</p><p class="bp-line-name">' + esc(fullName(l.p)) + '</p><p class="bp-line-unit' + (isSale(l.p) ? " is-sale" : "") + '">' + (isSale(l.p) ? '<span class="bp-price-was">' + fmt(l.p.wasPrice) + "</span> " : "") + fmt(l.p.price) + ' c/u</p><div class="bp-step sm"><button data-dec="' + l.p.id + '" aria-label="Quitar uno">−</button><b>' + l.qty + '</b><button data-inc="' + l.p.id + '" aria-label="Agregar uno">+</button></div></div><div class="bp-line-right"><span class="bp-line-sub">' + fmt(l.sub) + '</span><button class="bp-line-del" data-del="' + l.p.id + '" aria-label="Eliminar">Eliminar</button></div></div>';
+      return '<div class="bp-line"><img src="' + CFG.IMG_BASE + l.p.img + '" alt=""><div class="bp-line-info"><p class="bp-line-brand">' + esc(l.p.brand) + '</p><p class="bp-line-name">' + esc(fullName(l.p)) + '</p><p class="bp-line-unit' + (isSale(l.p) ? " is-sale" : "") + '">' + (isSale(l.p) ? '<span class="bp-price-was">' + fmt(wasOf(l.p)) + "</span> " : "") + fmt(unitPrice(l.p)) + ' c/u</p><div class="bp-step sm"><button data-dec="' + l.p.id + '" aria-label="Quitar uno">−</button><b>' + l.qty + '</b><button data-inc="' + l.p.id + '" aria-label="Agregar uno">+</button></div></div><div class="bp-line-right"><span class="bp-line-sub">' + fmt(l.sub) + '</span><button class="bp-line-del" data-del="' + l.p.id + '" aria-label="Eliminar">Eliminar</button></div></div>';
     }).join("");
     $("#bp-cart-foot").classList.toggle("is-hidden", !L.length);
     renderOrderUI();
@@ -222,6 +232,130 @@
     return PAY_METHODS.map(function (m) {
       return '<button type="button" class="bp-pay-opt" role="radio" aria-checked="false" data-pay="' + m.id + '">' + esc(m.label) + "</button>";
     }).join("");
+  }
+
+  function hydrateStaticPrices() {
+    $$(".bp-card[data-id]").forEach(function (card) {
+      var p = byId[card.getAttribute("data-id")];
+      if (!p) return;
+      var priceEl = card.querySelector(".bp-price");
+      if (priceEl) {
+        priceEl.classList.toggle("is-sale", isSale(p));
+        priceEl.innerHTML = priceHTML(p);
+      }
+      var media = card.querySelector(".bp-media");
+      var badge = media && media.querySelector(".bp-badge-sale");
+      if (isSale(p)) {
+        if (!badge && media) media.insertAdjacentHTML("beforeend", '<span class="bp-badge bp-badge-sale">' + esc(p.saleBadge || "Oferta") + "</span>");
+        else if (badge) badge.textContent = p.saleBadge || "Oferta";
+      } else if (badge) badge.remove();
+      var wa = card.querySelector(".bp-wa-product");
+      if (wa) wa.href = productWaLink(p);
+    });
+    var pdp = document.querySelector(".pdp");
+    if (!pdp) return;
+    var add = pdp.querySelector("[data-add]");
+    var p = add && byId[add.getAttribute("data-add")];
+    if (!p) return;
+    var priceEl = pdp.querySelector(".pdp-price");
+    if (priceEl) {
+      priceEl.classList.toggle("is-sale", isSale(p));
+      priceEl.innerHTML = pdpPriceHTML(p);
+    }
+    var media = pdp.querySelector(".pdp-media");
+    var badge = media && media.querySelector(".pdp-badge-sale");
+    if (isSale(p)) {
+      if (!badge && media) media.insertAdjacentHTML("afterbegin", '<span class="pdp-badge pdp-badge-sale">' + esc(p.saleBadge || "Oferta") + "</span>");
+      else if (badge) badge.textContent = p.saleBadge || "Oferta";
+    } else if (badge) badge.remove();
+    var wa = pdp.querySelector("a.b-wa, a.bp-wa-product");
+    if (wa) wa.href = productWaLink(p);
+  }
+
+  function pad2(n) { return n < 10 ? "0" + n : String(n); }
+  function bfParts(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    var d = Math.floor(s / 86400); s -= d * 86400;
+    var h = Math.floor(s / 3600); s -= h * 3600;
+    var m = Math.floor(s / 60); s -= m * 60;
+    return { d: d, h: h, m: m, s: s };
+  }
+  function ensureBfBanner() {
+    var el = $("#bp-bf-banner");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "bp-bf-banner";
+    el.className = "bp-bf-banner";
+    el.setAttribute("role", "region");
+    el.setAttribute("aria-label", "Black Friday");
+    el.innerHTML = '<p class="bp-bf-kicker" data-bf-kicker>Black Friday empieza en</p>' +
+      '<div class="bp-bf-units" data-bf-units>' +
+      '<span class="bp-bf-unit"><b data-bf="d">0</b><span>días</span></span>' +
+      '<span class="bp-bf-unit"><b data-bf="h">00</b><span>horas</span></span>' +
+      '<span class="bp-bf-unit"><b data-bf="m">00</b><span>min</span></span>' +
+      '<span class="bp-bf-unit"><b data-bf="s">00</b><span>seg</span></span>' +
+      "</div>" +
+      '<a class="bp-bf-cta" href="/producto/vs-whipped-pure-seduction/">Ver ofertas</a>';
+    var announce = document.querySelector(".announce");
+    if (announce && announce.parentNode) announce.parentNode.insertBefore(el, announce);
+    else document.body.insertBefore(el, document.body.firstChild);
+    return el;
+  }
+  var bfWasLive = null;
+  function tickBfBanner() {
+    var el = ensureBfBanner();
+    var start = Date.parse(CFG.BLACK_FRIDAY_START || "");
+    var end = Date.parse(CFG.BLACK_FRIDAY_END || "");
+    var now = SALE.nowMs ? SALE.nowMs() : Date.now();
+    if (isNaN(start)) { el.hidden = true; return; }
+    if (!isNaN(end) && now > end) {
+      el.hidden = true;
+      el.classList.add("is-over");
+      if (bfWasLive !== false) {
+        var flipped = bfWasLive !== null;
+        bfWasLive = false;
+        if (flipped) {
+          hydrateStaticPrices();
+          renderProducts();
+          fillCtrls();
+          renderCart();
+        }
+      }
+      return;
+    }
+    el.hidden = false;
+    el.classList.remove("is-over");
+    var live = now >= start;
+    el.classList.toggle("is-live", live);
+    var kicker = el.querySelector("[data-bf-kicker]");
+    var units = el.querySelector("[data-bf-units]");
+    if (live) {
+      if (kicker) kicker.textContent = "BLACK FRIDAY — ¡Ya empezó!";
+      if (units) units.hidden = true;
+    } else {
+      if (kicker) kicker.textContent = "Black Friday empieza en";
+      if (units) units.hidden = false;
+      var part = bfParts(start - now);
+      var map = { d: String(part.d), h: pad2(part.h), m: pad2(part.m), s: pad2(part.s) };
+      Object.keys(map).forEach(function (k) {
+        var n = el.querySelector('[data-bf="' + k + '"]');
+        if (n) n.textContent = map[k];
+      });
+    }
+    if (bfWasLive !== live) {
+      var first = bfWasLive === null;
+      bfWasLive = live;
+      if (!first) {
+        hydrateStaticPrices();
+        renderProducts();
+        fillCtrls();
+        renderCart();
+      }
+    }
+  }
+  function initBfBanner() {
+    tickBfBanner();
+    setInterval(tickBfBanner, 1000);
   }
 
   function injectShell() {
@@ -325,7 +459,7 @@
   }
 
   window.BP = {
-    init: function (o) { for (var k in o) opts[k] = o[k]; injectShell(); renderPills(); renderProducts(); fillCtrls(); renderCart(); bind(); },
+    init: function (o) { for (var k in o) opts[k] = o[k]; injectShell(); hydrateStaticPrices(); renderPills(); renderProducts(); fillCtrls(); renderCart(); bind(); initBfBanner(); },
     fmt: fmt, productUrl: productUrl, productWaLink: productWaLink, buildMessage: buildMessage, waLink: waLink, total: total, count: count, lines: lines,
     payMethods: PAY_METHODS, isBogota: isBogota, orderIssues: orderIssues,
     _setCart: function (c) { cart = c; save(CART_KEY, cart); renderProducts(); fillCtrls(); renderCart(); },
