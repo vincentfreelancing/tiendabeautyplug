@@ -28,12 +28,12 @@ window.BP_CATEGORIES = [
   { id: "otros",      label: "Otros" }
 ];
 
-/* Campos: id, brand, name, variant, desc, size, price, cat, img, kit, flyer */
+/* Campos: id, brand, name, variant, desc, size, price, wasPrice, saleBadge, cat, img, kit, flyer */
 window.BP_PRODUCTS = [
   // ---------- Cuerpo · Victoria's Secret Whipped ----------
   { id:"vs-whipped-bare-vanilla",   brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Bare Vanilla",   desc:"Cálida, dulce y envolvente.",  size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-bare-vanilla.webp",   flyer:"vs-whipped.webp" },
   { id:"vs-whipped-velvet-petals",  brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Velvet Petals",  desc:"Floral, suave y delicada.",    size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-velvet-petals.webp",  flyer:"vs-whipped.webp" },
-  { id:"vs-whipped-pure-seduction", brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Pure Seduction", desc:"Sensual, dulce y atrevida.",   size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-pure-seduction.webp", flyer:"vs-whipped.webp" },
+  { id:"vs-whipped-pure-seduction", brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Pure Seduction", desc:"Sensual, dulce y atrevida.",   size:"236 ml", price:76500, wasPrice:85000, saleBadge:"Black Friday -10%", cat:"cuerpo", img:"vs-whipped-pure-seduction.webp", flyer:"vs-whipped.webp" },
   { id:"vs-whipped-love-spell",     brand:"Victoria's Secret", name:"Whipped Fragrance Lotion", variant:"Love Spell",     desc:"Dulce, frutal y romántica.",   size:"236 ml", price:85000, cat:"cuerpo", img:"vs-whipped-love-spell.webp",     flyer:"vs-whipped.webp" },
   // ---------- Cuerpo · VS Fragrance Lotion ----------
   { id:"vs-lotion-bare-vanilla",  brand:"Victoria's Secret", name:"Fragrance Lotion", variant:"Bare Vanilla",  desc:"Dulce, cálida y envolvente.", size:"236 ml", price:70000, cat:"cuerpo", img:"vs-lotion-bare-vanilla.webp",  flyer:"vs-fragrance-lotion.webp" },

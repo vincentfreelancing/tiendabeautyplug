@@ -37,3 +37,10 @@
 .legal ul{margin:0 0 16px;padding-left:1.2em}
 .legal a{color:var(--gold3);text-decoration:none;border-bottom:1px solid rgba(126,90,44,.4)}
 .legal a:hover{color:var(--rose);border-bottom-color:var(--rose)}
+
+.pdp-price.is-sale{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin:0 0 18px}
+.pdp-price.is-sale .bp-price-was{font-size:20px;font-weight:600}
+.pdp-price.is-sale .bp-price-now{font-size:32px;font-weight:800}
+.pdp-price.is-sale .bp-sale-badge{font-size:11px;padding:5px 10px}
+.pdp-badge-sale{background:var(--dark);color:var(--ink);border:1px solid var(--gold2)}
+.pdp-badge + .pdp-badge-sale{top:52px}

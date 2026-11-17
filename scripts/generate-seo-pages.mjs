@@ -30,6 +30,23 @@ function esc(s) {
 function escAttr(s) { return esc(s); }
 function fullName(p) { return p.name + (p.variant && !p.kit ? " – " + p.variant : ""); }
 function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+function isSale(p) { return !!(p.wasPrice && p.wasPrice > p.price); }
+function priceHTML(p) {
+  if (!isSale(p)) return fmt(p.price);
+  return `<span class="bp-price-was">${fmt(p.wasPrice)}</span>` +
+    `<span class="bp-price-now">${fmt(p.price)}</span>` +
+    `<span class="bp-sale-badge">${esc(p.saleBadge || "Oferta")}</span>`;
+}
+function saleMediaBadge(p) {
+  return isSale(p) ? `<span class="bp-badge bp-badge-sale">${esc(p.saleBadge || "Oferta")}</span>` : "";
+}
+function pdpPriceHTML(p) {
+  const cop = ' <span style="font-size:14px;font-weight:700;color:var(--muted)">COP</span>';
+  if (!isSale(p)) return fmt(p.price) + cop;
+  return `<span class="bp-price-was">${fmt(p.wasPrice)}</span>` +
+    `<span class="bp-price-now">${fmt(p.price)}${cop}</span>` +
+    `<span class="bp-sale-badge">${esc(p.saleBadge || "Oferta")}</span>`;
+}
 function productUrl(p) { return `/producto/${p.id}/`; }
 function productLabel(p) { return `${p.brand} · ${fullName(p)}${p.size ? " (" + p.size + ")" : ""}`; }
 function productWaHref(p) {
@@ -145,11 +162,11 @@ function cardHtml(p, i) {
     : (p.size ? `<p class="bp-variant">${esc(p.size)}</p>` : "");
   return `<article class="bp-card${p.kit ? " is-kit" : ""}" data-id="${esc(p.id)}" style="--i:${i % 12}">` +
     `<div class="bp-media"><a href="${href}"><img src="/images/${esc(p.img)}" alt="${escAttr(p.brand + " " + name)}" width="480" height="600"></a>` +
-    (p.kit ? '<span class="bp-badge">Kit completo</span>' : "") +
+    (p.kit ? '<span class="bp-badge">Kit completo</span>' : "") + saleMediaBadge(p) +
     `</div><div class="bp-info"><p class="bp-brand">${esc(p.brand)}</p><h3 class="bp-name"><a href="${href}">${esc(p.name)}</a></h3>` +
     variant +
     `<p class="bp-desc">${esc(p.desc)}</p>` +
-    `<div class="bp-row"><span class="bp-price">${fmt(p.price)}</span><span class="bp-ctrl" data-ctrl="${esc(p.id)}"><button class="bp-add" data-add="${esc(p.id)}" aria-label="Agregar ${escAttr(name)}"><span>Agregar</span></button></span></div>${waProductBtn(p)}</div></article>`;
+    `<div class="bp-row"><span class="bp-price${isSale(p) ? " is-sale" : ""}">${priceHTML(p)}</span><span class="bp-ctrl" data-ctrl="${esc(p.id)}"><button class="bp-add" data-add="${esc(p.id)}" aria-label="Agregar ${escAttr(name)}"><span>Agregar</span></button></span></div>${waProductBtn(p)}</div></article>`;
 }
 
 const CAT_INTRO = {
@@ -239,13 +256,13 @@ ${chromeNav()}
 <main class="pdp"><div class="wrap">
   <nav class="pdp-crumb" aria-label="Miga de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><a href="${catUrl(cat)}">${esc(catLabel(cat))}</a><span aria-hidden="true">/</span>${esc(name)}</nav>
   <div class="pdp-grid">
-    <div class="pdp-media">${p.kit ? '<span class="pdp-badge">Kit completo</span>' : ""}<img src="/images/${esc(p.img)}" alt="${escAttr(p.brand + " " + name)}" width="800" height="800"></div>
+    <div class="pdp-media">${p.kit ? '<span class="pdp-badge">Kit completo</span>' : ""}${isSale(p) ? `<span class="pdp-badge pdp-badge-sale">${esc(p.saleBadge || "Oferta")}</span>` : ""}<img src="/images/${esc(p.img)}" alt="${escAttr(p.brand + " " + name)}" width="800" height="800"></div>
     <div class="pdp-info">
       <p class="pdp-brand">${esc(p.brand)}</p>
       <h1>${esc(p.name)}</h1>
       ${variantLine ? `<p class="pdp-variant">${variantLine}</p>` : ""}
       <p class="pdp-desc">${esc(p.desc)}</p>
-      <span class="pdp-price">${fmt(p.price)} <span style="font-size:14px;font-weight:700;color:var(--muted)">COP</span></span>
+      <span class="pdp-price${isSale(p) ? " is-sale" : ""}">${pdpPriceHTML(p)}</span>
       <div class="pdp-actions">
         <span class="bp-ctrl" data-ctrl="${esc(p.id)}"><button class="bp-add" data-add="${esc(p.id)}" aria-label="Agregar ${escAttr(name)}"><span>Agregar</span></button></span>
         <span class="pdp-add-label">Agregar al carrito</span>

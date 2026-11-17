@@ -16,6 +16,13 @@
   var payById = {}; PAY_METHODS.forEach(function (m) { payById[m.id] = m; });
 
   function fmt(n) { return "$" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function isSale(p) { return !!(p.wasPrice && p.wasPrice > p.price); }
+  function priceHTML(p) {
+    if (!isSale(p)) return fmt(p.price);
+    return '<span class="bp-price-was">' + fmt(p.wasPrice) + '</span>' +
+      '<span class="bp-price-now">' + fmt(p.price) + '</span>' +
+      '<span class="bp-sale-badge">' + esc(p.saleBadge || "Oferta") + "</span>";
+  }
   function nProductos(n) { return n + (n === 1 ? " producto" : " productos"); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fullName(p) { return p.name + (p.variant && !p.kit ? " – " + p.variant : ""); }
@@ -115,11 +122,12 @@
     return '<article class="bp-card' + (p.kit ? " is-kit" : "") + '" data-id="' + p.id + '" style="--i:' + (i % 12) + '">' +
       '<div class="bp-media"><a href="' + productUrl(p) + '"><img src="' + CFG.IMG_BASE + p.img + '" alt="' + esc(p.brand + " " + fullName(p)) + '" loading="lazy" width="480" height="600"></a>' +
       (p.kit ? '<span class="bp-badge">Kit completo</span>' : "") +
+      (isSale(p) ? '<span class="bp-badge bp-badge-sale">' + esc(p.saleBadge || "Oferta") + "</span>" : "") +
       (p.flyer ? '<button class="bp-flyer" data-flyer="' + p.flyer + '" aria-label="Ver flyer">Ver flyer</button>' : "") + "</div>" +
       '<div class="bp-info"><p class="bp-brand">' + esc(p.brand) + '</p><h3 class="bp-name"><a href="' + productUrl(p) + '">' + esc(p.name) + "</a></h3>" +
       (p.variant ? '<p class="bp-variant">' + esc(p.variant) + (p.size && !p.kit ? " · " + esc(p.size) : "") + "</p>" : (p.size ? '<p class="bp-variant">' + esc(p.size) + "</p>" : "")) +
       '<p class="bp-desc">' + esc(p.desc) + "</p>" +
-      '<div class="bp-row"><span class="bp-price">' + fmt(p.price) + '</span><span class="bp-ctrl" data-ctrl="' + p.id + '">' + ctrl(p) + "</span></div>" + waProductBtn(p) + "</div></article>";
+      '<div class="bp-row"><span class="bp-price' + (isSale(p) ? " is-sale" : "") + '">' + priceHTML(p) + '</span><span class="bp-ctrl" data-ctrl="' + p.id + '">' + ctrl(p) + "</span></div>" + waProductBtn(p) + "</div></article>";
   }
 
   function renderPills() {
@@ -193,7 +201,7 @@
     var box = $("#bp-cart-items"); if (!box) return;
     if (!L.length) { box.innerHTML = '<div class="bp-cart-empty"><div class="bp-cart-empty-ico">🛍️</div><p>Tu carrito está vacío.</p><small>Agrega tus favoritos y confirma tu pedido por WhatsApp.</small></div>'; }
     else box.innerHTML = L.map(function (l) {
-      return '<div class="bp-line"><img src="' + CFG.IMG_BASE + l.p.img + '" alt=""><div class="bp-line-info"><p class="bp-line-brand">' + esc(l.p.brand) + '</p><p class="bp-line-name">' + esc(fullName(l.p)) + '</p><p class="bp-line-unit">' + fmt(l.p.price) + ' c/u</p><div class="bp-step sm"><button data-dec="' + l.p.id + '" aria-label="Quitar uno">−</button><b>' + l.qty + '</b><button data-inc="' + l.p.id + '" aria-label="Agregar uno">+</button></div></div><div class="bp-line-right"><span class="bp-line-sub">' + fmt(l.sub) + '</span><button class="bp-line-del" data-del="' + l.p.id + '" aria-label="Eliminar">Eliminar</button></div></div>';
+      return '<div class="bp-line"><img src="' + CFG.IMG_BASE + l.p.img + '" alt=""><div class="bp-line-info"><p class="bp-line-brand">' + esc(l.p.brand) + '</p><p class="bp-line-name">' + esc(fullName(l.p)) + '</p><p class="bp-line-unit' + (isSale(l.p) ? " is-sale" : "") + '">' + (isSale(l.p) ? '<span class="bp-price-was">' + fmt(l.p.wasPrice) + "</span> " : "") + fmt(l.p.price) + ' c/u</p><div class="bp-step sm"><button data-dec="' + l.p.id + '" aria-label="Quitar uno">−</button><b>' + l.qty + '</b><button data-inc="' + l.p.id + '" aria-label="Agregar uno">+</button></div></div><div class="bp-line-right"><span class="bp-line-sub">' + fmt(l.sub) + '</span><button class="bp-line-del" data-del="' + l.p.id + '" aria-label="Eliminar">Eliminar</button></div></div>';
     }).join("");
     $("#bp-cart-foot").classList.toggle("is-hidden", !L.length);
     renderOrderUI();
